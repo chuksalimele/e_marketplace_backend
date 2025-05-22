@@ -2,6 +2,7 @@
 package com.marketplace.emarketplacebackend.model;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;   // NEW IMPORT
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties; // NEW IMPORT
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -35,6 +36,7 @@ public class CartItem {
     // nullable = false means a CartItem must always refer to a Product.
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "product_id", nullable = false)
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"}) // NEW ADDITION
     private Product product;
 
     @Column(nullable = false)
