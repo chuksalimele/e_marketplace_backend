@@ -119,8 +119,69 @@ public class CartService {
         return userCart;
     }
 
+/**
+     * Updates the quantity of a specific product in the current user's cart.
+     * If quantity is 0, the item is removed.
+     * @param productId The ID of the product whose quantity to update.
+     * @param newQuantity The new quantity for the product.
+     * @return The updated CartItem, or null if the item was removed.
+     * @throws ResourceNotFoundException if the product or cart item is not found.
+     * @throws IllegalArgumentException if newQuantity is negative.
+     */
+    @Transactional
+    public CartItem updateCartItemQuantity(Long productId, Integer newQuantity) {
+        if (newQuantity < 0) {
+            throw new IllegalArgumentException("Quantity cannot be negative.");
+        }
+
+        Cart userCart = getOrCreateCartForCurrentUser();
+
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + productId));
+
+        CartItem cartItem = cartItemRepository.findByCartAndProduct(userCart, product)
+                .orElseThrow(() -> new ResourceNotFoundException("Product with id " + productId + " not found in cart."));
+
+        if (newQuantity == 0) {
+            // If new quantity is 0, remove the item
+            userCart.getItems().remove(cartItem); // Remove from collection
+            cartItemRepository.delete(cartItem); // Explicitly delete from DB
+            cartRepository.save(userCart); // Save cart to reflect changes in collection
+            return null; // Indicate item was removed
+        } else {
+            // Update quantity
+            cartItem.setQuantity(newQuantity);
+            cartItemRepository.save(cartItem); // Save the updated cart item
+            // Note: saving cartItem implicitly saves cart if cart is managed.
+            // cartRepository.save(userCart); // Optional, but good to keep if you want to ensure cart state is flushed
+            return cartItem;
+        }
+    }
+
+    /**
+     * Removes a specific product from the current user's cart.
+     * @param productId The ID of the product to remove.
+     * @throws ResourceNotFoundException if the product or cart item is not found.
+     */
+    @Transactional
+    public void removeCartItem(Long productId) {
+        Cart userCart = getOrCreateCartForCurrentUser();
+
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + productId));
+
+        CartItem cartItem = cartItemRepository.findByCartAndProduct(userCart, product)
+                .orElseThrow(() -> new ResourceNotFoundException("Product with id " + productId + " not found in cart."));
+
+        userCart.getItems().remove(cartItem); // Remove from the cart's collection
+        cartItemRepository.delete(cartItem); // Explicitly delete from database
+
+        // Due to orphanRemoval=true on Cart.items, removing from the collection
+        // and saving the cart *should* also delete the item.
+        // However, explicit deletion ensures it regardless of the orphanRemoval configuration.
+        cartRepository.save(userCart); // Save cart to reflect the change in its collection
+    }
+        
     // You will add more methods here later:
-    // - updateCartItemQuantity(productId, newQuantity)
-    // - removeCartItem(productId)
     // - clearCart()
 }

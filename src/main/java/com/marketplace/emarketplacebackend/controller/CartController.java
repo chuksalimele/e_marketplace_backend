@@ -59,9 +59,58 @@ public class CartController {
         Cart userCart = cartService.getUserCart();
         return new ResponseEntity<>(userCart, HttpStatus.OK);
     }
+/**
+     * Endpoint to update the quantity of a product in the authenticated user's cart.
+     * If the new quantity is 0, the item will be removed.
+     * Requires the user to be authenticated.
+     *
+     * Request Body example:
+     * {
+     * "productId": 1,
+     * "quantity": 5
+     * }
+     */
+    @PutMapping("/update")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<?> updateCartItem(@RequestBody Map<String, Long> payload) {
+        Long productId = payload.get("productId");
+        Integer quantity = payload.get("quantity").intValue();
 
+        if (productId == null || quantity == null || quantity < 0) {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
+
+        CartItem updatedCartItem = cartService.updateCartItemQuantity(productId, quantity);
+
+        if (updatedCartItem == null) {
+            // Item was removed (quantity set to 0)
+            return new ResponseEntity<>("Product removed from cart successfully.", HttpStatus.OK);
+        }
+        return new ResponseEntity<>(updatedCartItem, HttpStatus.OK);
+    }
+
+    /**
+     * Endpoint to remove a product from the authenticated user's cart.
+     * Requires the user to be authenticated.
+     *
+     * Request Body example:
+     * {
+     * "productId": 1
+     * }
+     */
+    @DeleteMapping("/remove")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<String> removeProductFromCart(@RequestBody Map<String, Long> payload) {
+        Long productId = payload.get("productId");
+
+        if (productId == null) {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST.getReasonPhrase(), HttpStatus.BAD_REQUEST);
+        }
+
+        cartService.removeCartItem(productId);
+        return new ResponseEntity<>("Product removed from cart successfully.", HttpStatus.OK);
+    }
+    
     // --- Future methods to add: ---
-    // @PutMapping("/update") for changing quantities
-    // @DeleteMapping("/remove/{productId}") for removing specific items
     // @DeleteMapping("/clear") for clearing the entire cart
 }
