@@ -3,13 +3,19 @@ package com.marketplace.emarketplacebackend.controller;
 
 import com.marketplace.emarketplacebackend.model.Seller;
 import com.marketplace.emarketplacebackend.repository.SellerRepository;
+import com.marketplace.emarketplacebackend.service.SellerService; // NEW IMPORT
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;    // NEW IMPORT
+import org.springframework.data.domain.Pageable; // NEW IMPORT
+import org.springframework.data.domain.Sort;     // NEW IMPORT
+import org.springframework.data.web.PageableDefault; // NEW IMPORT
+import org.springframework.data.web.SortDefault;     // NEW IMPORT
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
+import java.util.List; // Keep this import for non-paginated methods if they still exist
 import java.util.Optional;
 
 @CrossOrigin(origins = "http://localhost:8080", maxAge = 3600) // Adjust for Flutter app's port
@@ -17,20 +23,32 @@ import java.util.Optional;
 @RequestMapping("/api/sellers")
 public class SellerController {
 
+    private final SellerRepository sellerRepository; // Keep if directly used in controller
+    private final SellerService sellerService; // NEW: Inject SellerService
+
     @Autowired
-    SellerRepository sellerRepository;
+    public SellerController(SellerRepository sellerRepository, SellerService sellerService) {
+        this.sellerRepository = sellerRepository;
+        this.sellerService = sellerService; // Initialize service
+    }
 
     // Get all sellers - accessible by any authenticated user
+    // MODIFIED: getAllSellers to support pagination and sorting
+    // Example usage: GET /api/sellers?page=0&size=5&sort=name,desc
     @GetMapping
-    public ResponseEntity<List<Seller>> getAllSellers() {
-        List<Seller> sellers = sellerRepository.findAll();
+    public ResponseEntity<Page<Seller>> getAllSellers(
+            @PageableDefault(page = 0, size = 10) // Default page 0, size 10
+            @SortDefault(sort = "name", direction = Sort.Direction.ASC) // Default sort by name ascending
+            Pageable pageable) {
+        
+        Page<Seller> sellers = sellerService.getAllSellers(pageable);
         return new ResponseEntity<>(sellers, HttpStatus.OK);
     }
 
     // Get seller by ID - accessible by any authenticated user
     @GetMapping("/{id}")
     public ResponseEntity<Seller> getSellerById(@PathVariable Long id) {
-        Optional<Seller> sellerData = sellerRepository.findById(id);
+        Optional<Seller> sellerData = sellerService.getSellerById(id); // Use service
         return sellerData.map(seller -> new ResponseEntity<>(seller, HttpStatus.OK))
                          .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
     }
@@ -40,13 +58,9 @@ public class SellerController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Seller> createSeller(@RequestBody Seller seller) {
         try {
-            // CORRECTED LINE: Directly save the 'seller' object received in the request body.
-            // Spring will handle generating the ID if 'seller.id' is null.
-            Seller _seller = sellerRepository.save(seller);
+            Seller _seller = sellerService.saveSeller(seller); // Use service
             return new ResponseEntity<>(_seller, HttpStatus.CREATED);
         } catch (Exception e) {
-            // Log the exception for debugging purposes in a real application
-            // logger.error("Error creating seller: {}", e.getMessage(), e);
             return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
@@ -55,18 +69,18 @@ public class SellerController {
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Seller> updateSeller(@PathVariable Long id, @RequestBody Seller seller) {
-        Optional<Seller> sellerData = sellerRepository.findById(id);
+        Optional<Seller> sellerData = sellerService.getSellerById(id); // Use service
 
         if (sellerData.isPresent()) {
             Seller _seller = sellerData.get();
-            // Assuming the 'seller' object from @RequestBody contains the updated fields
             _seller.setName(seller.getName());
+            _seller.setEmail(seller.getEmail()); // Ensure email is updated if needed
             _seller.setLocation(seller.getLocation());
             _seller.setRating(seller.getRating());
             _seller.setProfileImageUrl(seller.getProfileImageUrl());
             _seller.setDescription(seller.getDescription());
             _seller.setCategories(seller.getCategories());
-            return new ResponseEntity<>(sellerRepository.save(_seller), HttpStatus.OK);
+            return new ResponseEntity<>(sellerService.saveSeller(_seller), HttpStatus.OK); // Use service
         } else {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
@@ -77,10 +91,23 @@ public class SellerController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<HttpStatus> deleteSeller(@PathVariable Long id) {
         try {
-            sellerRepository.deleteById(id);
+            sellerService.deleteSeller(id); // Use service
             return new ResponseEntity<>(HttpStatus.NO_CONTENT);
         } catch (Exception e) {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
+    }
+
+    // NEW: Endpoint to search sellers by name with pagination and sorting
+    // Example: GET /api/sellers/search?query=tech&page=0&size=5
+    @GetMapping("/search")
+    public ResponseEntity<Page<Seller>> searchSellers(
+            @RequestParam String query,
+            @PageableDefault(page = 0, size = 10)
+            @SortDefault(sort = "name", direction = Sort.Direction.ASC)
+            Pageable pageable) {
+
+        Page<Seller> sellers = sellerService.searchSellers(query, pageable);
+        return new ResponseEntity<>(sellers, HttpStatus.OK);
     }
 }

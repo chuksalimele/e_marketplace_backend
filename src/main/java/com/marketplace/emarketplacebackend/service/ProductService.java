@@ -9,6 +9,8 @@ import com.marketplace.emarketplacebackend.repository.CategoryRepository;
 import com.marketplace.emarketplacebackend.repository.ProductRepository;
 import com.marketplace.emarketplacebackend.repository.SellerRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page; // NEW IMPORT
+import org.springframework.data.domain.Pageable; // NEW IMPORT
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,11 +34,7 @@ public class ProductService {
 
     public Product getProductById(Long id) {
         return productRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Product", "id", id));
-    }
-
-    public List<Product> getAllProducts() {
-        return productRepository.findAll();
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + id));
     }
 
     @Transactional
@@ -47,11 +45,14 @@ public class ProductService {
         Seller seller = sellerRepository.findById(productRequest.getSellerId())
                 .orElseThrow(() -> new ResourceNotFoundException("Seller", "id", productRequest.getSellerId()));
 
-        Product product = new Product();
-        product.setName(productRequest.getName());
-        product.setDescription(productRequest.getDescription());
-        product.setPrice(productRequest.getPrice());
-        product.setStock(productRequest.getStock()); // Set the new stock field
+        Product product = new Product(
+                productRequest.getName(),
+                productRequest.getDescription(),
+                productRequest.getPrice(),
+                productRequest.getStock(),
+                seller,
+                category
+        );
         product.setCategory(category);
         product.setSeller(seller);
 
@@ -72,7 +73,7 @@ public class ProductService {
         existingProduct.setName(productRequest.getName());
         existingProduct.setDescription(productRequest.getDescription());
         existingProduct.setPrice(productRequest.getPrice());
-        existingProduct.setStock(productRequest.getStock()); // Update the new stock field
+        existingProduct.setStock(productRequest.getStock()); 
         existingProduct.setCategory(category);
         existingProduct.setSeller(seller);
 
@@ -84,5 +85,26 @@ public class ProductService {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + id));
         productRepository.delete(product);
+    }
+
+    // MODIFIED: getAllProducts to accept Pageable
+    public Page<Product> getAllProducts(Pageable pageable) {
+        return productRepository.findAll(pageable);
+    }
+
+    // NEW: Get products by category with pagination and sorting
+    public Page<Product> getProductsByCategory(String categoryName, Pageable pageable) {
+        return productRepository.findByCategory_Name(categoryName, pageable);
+    }
+
+    // NEW: Get products by seller with pagination and sorting
+    public Page<Product> getProductsBySeller(Long sellerId, Pageable pageable) {
+        return productRepository.findBySeller_Id(sellerId, pageable);
+    }
+
+    // NEW: Search products by name or description with pagination and sorting
+    public Page<Product> searchProducts(String searchTerm, Pageable pageable) {
+        // You can choose to search by name, description, or both
+        return productRepository.findByNameContainingIgnoreCaseOrDescriptionContainingIgnoreCase(searchTerm, searchTerm, pageable);
     }
 }
