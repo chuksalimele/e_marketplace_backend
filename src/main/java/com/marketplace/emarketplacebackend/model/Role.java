@@ -1,37 +1,31 @@
 // Role.java
 package com.marketplace.emarketplacebackend.model;
 
-import jakarta.persistence.*; // Essential JPA annotations
-import lombok.Data;          // Lombok: Generates boilerplate code (getters/setters/etc.)
-import lombok.NoArgsConstructor; // Lombok: Generates no-argument constructor
-import lombok.AllArgsConstructor; // Lombok: Generates constructor with all fields
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-@Entity // Marks this class as a JPA entity, meaning it maps to a database table
-@Table(name = "roles") // Specifies the actual table name in the database as "roles"
-                       // (Using "roles" instead of default "role" to avoid potential SQL keyword conflicts)
-@Data // From Lombok: Automatically creates getters, setters, toString(), equals(), and hashCode() methods
-@NoArgsConstructor // From Lombok: Creates an empty constructor, required by JPA
-@AllArgsConstructor // From Lombok: Creates a constructor with all fields, useful for creation
+@Entity
+@Table(name = "roles")
+@Data
+@NoArgsConstructor
+// Remove @AllArgsConstructor if you want to explicitly define constructors
+// or ensure it generates the one you want.
+// If you keep @AllArgsConstructor, it will be: Role(Long id, ERole name)
+@AllArgsConstructor // Keep it for now, but be aware of the generated constructor
 public class Role {
 
-    @Id // Marks this field as the primary key of the table
-    @GeneratedValue(strategy = GenerationType.IDENTITY) // Tells the database to auto-increment this ID
-    private Long id; // Unique identifier for each role
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-    @Enumerated(EnumType.STRING) // Specifies that the `name` enum value should be stored as its String representation
-                                 // (e.g., "ROLE_USER" instead of an integer 0, 1, etc.)
-    @Column(length = 20, unique = true) // Defines column properties: max length 20, and ensures each role name is unique
-    private ERole name; // The specific name of the role, chosen from our predefined enum
+    // Change the type of 'name' from String to ERole
+    @Enumerated(EnumType.STRING) // This tells JPA to store the enum name (e.g., "ROLE_ADMIN") as a String in the database
+    @Column(nullable = false, unique = true)
+    private ERole name; // Now of type ERole
 
-    // An Enum (short for enumeration) defines a fixed set of constants.
-    // This ensures we only have specific, valid roles like USER, SELLER, ADMIN.
-    public enum ERole {
-        ROLE_USER,   // Standard user role (e.g., a buyer)
-        ROLE_SELLER, // User with seller permissions
-        ROLE_ADMIN   // Administrator role with full access
-    }
-
-    // A convenience constructor for creating a Role object with just its name
+    // Custom constructor to easily create a Role with its name (ERole enum)
     public Role(ERole name) {
         this.name = name;
     }

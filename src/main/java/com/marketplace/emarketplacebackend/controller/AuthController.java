@@ -2,7 +2,7 @@
 package com.marketplace.emarketplacebackend.controller;
 
 import com.marketplace.emarketplacebackend.model.Role;
-import com.marketplace.emarketplacebackend.model.Role.ERole;
+import com.marketplace.emarketplacebackend.model.ERole;
 import com.marketplace.emarketplacebackend.model.User;
 import com.marketplace.emarketplacebackend.payload.request.LoginRequest;
 import com.marketplace.emarketplacebackend.payload.request.SignupRequest;

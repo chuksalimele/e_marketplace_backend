@@ -1,67 +1,88 @@
-// ProductService.java
 package com.marketplace.emarketplacebackend.service;
 
+import com.marketplace.emarketplacebackend.dto.ProductRequest;
+import com.marketplace.emarketplacebackend.exception.ResourceNotFoundException;
+import com.marketplace.emarketplacebackend.model.Category;
 import com.marketplace.emarketplacebackend.model.Product;
+import com.marketplace.emarketplacebackend.model.Seller;
+import com.marketplace.emarketplacebackend.repository.CategoryRepository;
 import com.marketplace.emarketplacebackend.repository.ProductRepository;
+import com.marketplace.emarketplacebackend.repository.SellerRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Optional;
 
-@Service // Marks this class as a Spring Service component
+@Service
 public class ProductService {
 
     private final ProductRepository productRepository;
+    private final CategoryRepository categoryRepository;
+    private final SellerRepository sellerRepository;
 
-    // Spring will automatically inject ProductRepository here
     @Autowired
-    public ProductService(ProductRepository productRepository) {
+    public ProductService(ProductRepository productRepository,
+                          CategoryRepository categoryRepository,
+                          SellerRepository sellerRepository) {
         this.productRepository = productRepository;
+        this.categoryRepository = categoryRepository;
+        this.sellerRepository = sellerRepository;
     }
 
-    // --- CRUD Operations ---
+    public Product getProductById(Long id) {
+        return productRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Product", "id", id));
+    }
 
     public List<Product> getAllProducts() {
-        return productRepository.findAll(); // Inherited from JpaRepository
+        return productRepository.findAll();
     }
 
-    public Optional<Product> getProductById(Long id) {
-        return productRepository.findById(id); // Inherited from JpaRepository
-    }
+    @Transactional
+    public Product createProduct(ProductRequest productRequest) {
+        Category category = categoryRepository.findByName(productRequest.getCategoryName())
+                .orElseThrow(() -> new ResourceNotFoundException("Category", "name", productRequest.getCategoryName()));
 
-    public Product saveProduct(Product product) {
-        // Here you might add validation or other business logic before saving
+        Seller seller = sellerRepository.findById(productRequest.getSellerId())
+                .orElseThrow(() -> new ResourceNotFoundException("Seller", "id", productRequest.getSellerId()));
+
+        Product product = new Product();
+        product.setName(productRequest.getName());
+        product.setDescription(productRequest.getDescription());
+        product.setPrice(productRequest.getPrice());
+        product.setStock(productRequest.getStock()); // Set the new stock field
+        product.setCategory(category);
+        product.setSeller(seller);
+
         return productRepository.save(product);
     }
 
+    @Transactional
+    public Product updateProduct(Long id, ProductRequest productRequest) {
+        Product existingProduct = productRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Product", "id", id));
+
+        Category category = categoryRepository.findByName(productRequest.getCategoryName())
+                .orElseThrow(() -> new ResourceNotFoundException("Category", "name", productRequest.getCategoryName()));
+
+        Seller seller = sellerRepository.findById(productRequest.getSellerId())
+                .orElseThrow(() -> new ResourceNotFoundException("Seller", "id", productRequest.getSellerId()));
+
+        existingProduct.setName(productRequest.getName());
+        existingProduct.setDescription(productRequest.getDescription());
+        existingProduct.setPrice(productRequest.getPrice());
+        existingProduct.setStock(productRequest.getStock()); // Update the new stock field
+        existingProduct.setCategory(category);
+        existingProduct.setSeller(seller);
+
+        return productRepository.save(existingProduct);
+    }
+    
+    @Transactional
     public void deleteProduct(Long id) {
-        productRepository.deleteById(id);
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + id));
+        productRepository.delete(product);
     }
-
-    // --- Custom Query Methods (mirroring repository methods) ---
-
-    public List<Product> getProductsByCategory(String category) {
-        return productRepository.findByCategory(category);
-    }
-
-    public List<Product> getProductsBySellerId(String sellerId) {
-        return productRepository.findBySellerId(sellerId);
-    }
-
-    public List<Product> searchProductsByName(String query) {
-        return productRepository.findByNameContainingIgnoreCase(query);
-    }
-
-    public List<Product> getProductsBySellerIdAndCategory(String sellerId, String category) {
-        return productRepository.findBySellerIdAndCategory(sellerId, category);
-    }
-
-    // For "advertised products", if not a specific field,
-    // you might have a more complex logic, e.g.,
-    // public List<Product> getAdvertisedProducts() {
-    //    // Implement logic to pick top/featured products
-    //    // For now, let's just return a subset of all products or assume a flag
-    //    return productRepository.findAll().subList(0, Math.min(5, productRepository.findAll().size()));
-    // }
 }

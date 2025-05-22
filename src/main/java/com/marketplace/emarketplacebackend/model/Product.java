@@ -1,54 +1,57 @@
 // Product.java
 package com.marketplace.emarketplacebackend.model;
 
-import jakarta.persistence.*; // JPA annotations
-import lombok.AllArgsConstructor; // Lombok for constructor
-import lombok.Data;             // Lombok for getters/setters
-import lombok.NoArgsConstructor;   // Lombok for constructor
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 
-@Entity // Marks this class as a JPA entity
-@Table(name = "products") // Specifies the table name in the database
-@Data // Lombok: Generates getters, setters, equals, hashCode, and toString methods
-@NoArgsConstructor // Lombok: Generates a constructor with no arguments
-@AllArgsConstructor // Lombok: Generates a constructor with all arguments
+@Entity
+@Table(name = "products")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+// Make sure to adjust these excludes based on your actual bidirectional relationships.
+// Assuming 'seller' and 'category' might be bidirectional and need exclusion from equals/hashCode.
+@EqualsAndHashCode(exclude = {"seller", "category"})
 public class Product {
 
-    @Id // Marks this field as the primary key
-    @GeneratedValue(strategy = GenerationType.IDENTITY) // Auto-generates ID for new entities
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "name", nullable = false) // Maps to a column named 'name', cannot be null
+    @Column(nullable = false)
     private String name;
 
-    @Column(name = "image_url") // Maps to a column named 'image_url'
-    private String imageUrl;
+    private String description;
 
-    @Column(name = "price", nullable = false) // Maps to 'price', cannot be null
+    @Column(nullable = false)
     private Double price;
 
-    @Column(name = "seller_id") // Maps to 'seller_id'
-    private String sellerId; // Keeping as String as per your initial model design
+    // NEW FIELD: Stock quantity
+    @Column(nullable = false)
+    private Integer stock; // Make sure this is initialized or set upon creation
 
-    @Column(name = "seller_name") // Maps to 'seller_name'
-    private String sellerName;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "seller_id", nullable = false)
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "products"}) // Assuming Seller has a 'products' list
+    private Seller seller;
 
-    @Column(name = "category") // Maps to 'category'
-    private String category;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "category_id", nullable = false)
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "products"}) // Assuming Category has a 'products' list
+    private Category category;
 
-    // --- NEW/VERIFY THIS FIELD ---
-    @Column(name = "weight") // Maps to 'weight' column
-    private Double weight; // Ensure this field exists and is of appropriate type (e.g., Double or double)
-
-    // Lombok's @Data annotation will automatically generate
-    // getWeight() and setWeight() methods for you.
-    // If you are not using Lombok, you would need to add these manually:
-    /*
-    public Double getWeight() {
-        return weight;
+    // You might want to update your constructors or add a new one
+    // to easily set the stock when creating Product objects.
+    public Product(String name, String description, Double price, Integer stock, Seller seller, Category category) {
+        this.name = name;
+        this.description = description;
+        this.price = price;
+        this.stock = stock; // Initialize stock
+        this.seller = seller;
+        this.category = category;
     }
-
-    public void setWeight(Double weight) {
-        this.weight = weight;
-    }
-    */
 }

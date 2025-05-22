@@ -4,6 +4,7 @@ package com.marketplace.emarketplacebackend.repository;
 import com.marketplace.emarketplacebackend.model.Product;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
+import java.util.Optional; // Add this import
 
 import java.util.List;
 
@@ -12,10 +13,10 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     // JpaRepository provides methods like save(), findById(), findAll(), deleteById(), etc.
 
     // You can define custom query methods by following Spring Data JPA naming conventions:
-    List<Product> findByCategory(String category);
-    List<Product> findBySellerId(String sellerId);
-    List<Product> findByNameContainingIgnoreCase(String name); // For partial, case-insensitive search by name
-    List<Product> findBySellerIdAndCategory(String sellerId, String category);
+    Optional<Product> findByName(String name); // Add this method
+    // Change findByCategory(String category) to findByCategory_Name(String categoryName)
+    List<Product> findByCategory_Name(String categoryName); // CORRECTED METHOD
+    List<Product> findBySeller_Id(Long sellerId);
 
     // This would be for the "advertised" products, but you might manage this differently
     // like with a boolean flag in the Product entity or a separate table for promotions.

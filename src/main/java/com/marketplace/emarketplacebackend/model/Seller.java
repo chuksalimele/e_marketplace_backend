@@ -1,43 +1,55 @@
 // Seller.java
 package com.marketplace.emarketplacebackend.model;
 
-import jakarta.persistence.*; // JPA annotations
-import lombok.AllArgsConstructor; // Lombok for constructor
-import lombok.Data;             // Lombok for getters/setters
-import lombok.NoArgsConstructor;   // Lombok for constructor
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.EqualsAndHashCode; // Assuming you're using this for @EqualsAndHashCode.Exclude
+import lombok.NoArgsConstructor;
+// import com.fasterxml.jackson.annotation.JsonIgnoreProperties; // If you use it for bidirectional relationships
 
-@Entity // Marks this class as a JPA entity
-@Table(name = "sellers") // Specifies the table name in the database
-@Data // Lombok: Generates getters, setters, equals, hashCode, and toString methods
-@NoArgsConstructor // Lombok: Generates a constructor with no arguments
-@AllArgsConstructor // Lombok: Generates a constructor with all arguments
+@Entity
+@Table(name = "sellers")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor // This will now generate a constructor with all 8 fields (id, name, email, location, etc.)
+// If Seller has a products list, remember to exclude it from equals/hashCode
+// @EqualsAndHashCode(exclude = {"products"})
 public class Seller {
 
-    @Id // Marks this field as the primary key
-    @GeneratedValue(strategy = GenerationType.IDENTITY) // Auto-generates ID for new entities
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "name", nullable = false)
+    @Column(name = "name", nullable = false, unique = true) // Added unique=true as names are often unique
     private String name;
 
-    // --- NEW/VERIFY THIS FIELD ---
-    @Column(name = "location") // Maps to 'location' column
-    private String location; // Ensure this field exists
+    @Column(name = "email", nullable = false, unique = true) // ADD THIS FIELD BACK
+    private String email;
 
-    // --- NEW/VERIFY THIS FIELD ---
-    @Column(name = "rating") // Maps to 'rating' column
-    private Integer rating; // Or 'Double' if you prefer decimal ratings
+    @Column(name = "location")
+    private String location;
+
+    @Column(name = "rating")
+    private Integer rating;
 
     @Column(name = "profile_image_url")
     private String profileImageUrl;
 
-    @Column(name = "description", length = 1000) // Increased length for description
+    @Column(name = "description", length = 1000)
     private String description;
 
     @Column(name = "categories")
     private String categories; // Comma-separated string of categories
 
-    // Lombok's @Data annotation will automatically generate
-    // getLocation(), setLocation(), getRating(), setRating() methods for you.
-    // If you are not using Lombok, you would need to add these manually.
+    // OPTIONAL: Add a custom constructor for common initializations if you don't want to pass all fields
+     public Seller(String name, String email) {
+         this.name = name;
+         this.email = email;
+         this.location = null; // Or ""
+         this.rating = 0; // Or null
+         this.profileImageUrl = null; // Or ""
+         this.description = null; // Or ""
+         this.categories = null; // Or ""
+    }
 }

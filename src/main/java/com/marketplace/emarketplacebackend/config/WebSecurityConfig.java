@@ -1,7 +1,6 @@
 // WebSecurityConfig.java - UPDATED for H2 Console access
 package com.marketplace.emarketplacebackend.config;
 
-import com.marketplace.emarketplacebackend.security.jwt.ApiAccessDeniedHandler;
 import com.marketplace.emarketplacebackend.security.jwt.AuthEntryPointJwt;
 import com.marketplace.emarketplacebackend.security.jwt.AuthTokenFilter;
 import com.marketplace.emarketplacebackend.service.UserDetailsServiceImpl;
@@ -29,9 +28,6 @@ public class WebSecurityConfig {
     @Autowired
     private AuthEntryPointJwt unauthorizedHandler;
     
-    @Autowired // UPDATED: Inject our ApiAccessDeniedHandler
-    private ApiAccessDeniedHandler apiAccessDeniedHandler;
-
    
     @Bean
     public AuthTokenFilter authenticationJwtTokenFilter() {
@@ -61,7 +57,6 @@ public class WebSecurityConfig {
         http.csrf(csrf -> csrf.disable())
             .exceptionHandling(exception -> exception
             .authenticationEntryPoint(unauthorizedHandler)
-            .accessDeniedHandler(apiAccessDeniedHandler)// NEW ADDITION: Set our custom access denied handler
             )
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
