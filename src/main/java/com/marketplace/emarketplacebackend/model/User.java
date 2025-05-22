@@ -1,8 +1,10 @@
 // User.java
 package com.marketplace.emarketplacebackend.model;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference; // NEW IMPORT
 import jakarta.persistence.*; // Essential JPA annotations
 import lombok.Data;          // Lombok
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor; // Lombok
 import lombok.AllArgsConstructor; // Lombok
 import java.util.HashSet;    // For storing roles in a Set
@@ -18,6 +20,7 @@ import java.util.Set;      // For storing roles in a Set
 @Data // From Lombok: Generates getters, setters, etc.
 @NoArgsConstructor // From Lombok: Generates an empty constructor
 @AllArgsConstructor // From Lombok: Generates a constructor with all fields
+@EqualsAndHashCode(exclude = {"cart"}) // EXCLUDE 'cart'
 public class User {
 
     @Id // Marks this field as the primary key
@@ -46,6 +49,7 @@ public class User {
     // CascadeType.ALL ensures that if a User is deleted, their Cart is also deleted.
     // orphanRemoval = true ensures that if a Cart is detached from the User, it's removed from the DB.
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonManagedReference // This side is the "owner" for serialization
     private Cart cart;
     
     // A convenience constructor for registering a new user (before roles are assigned)

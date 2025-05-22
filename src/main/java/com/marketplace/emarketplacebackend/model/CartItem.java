@@ -1,9 +1,11 @@
 // CartItem.java
 package com.marketplace.emarketplacebackend.model;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;   // NEW IMPORT
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 @Entity
@@ -11,6 +13,7 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@EqualsAndHashCode(exclude = {"cart"}) // EXCLUDE 'cart'
 public class CartItem {
 
     @Id
@@ -23,6 +26,7 @@ public class CartItem {
     // nullable = false means a CartItem must always belong to a Cart.
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "cart_id", nullable = false)
+    @JsonBackReference // This side prevents infinite loop when serializing Cart -> CartItem
     private Cart cart;
 
     // Many-to-One relationship with Product
