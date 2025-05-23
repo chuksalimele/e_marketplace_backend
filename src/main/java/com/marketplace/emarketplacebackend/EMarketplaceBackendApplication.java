@@ -6,11 +6,13 @@ import com.marketplace.emarketplacebackend.model.ERole;
 import com.marketplace.emarketplacebackend.model.Product;
 import com.marketplace.emarketplacebackend.model.Role;
 import com.marketplace.emarketplacebackend.model.Seller;
+import com.marketplace.emarketplacebackend.model.Store;
 import com.marketplace.emarketplacebackend.model.User;
 import com.marketplace.emarketplacebackend.repository.CategoryRepository;
 import com.marketplace.emarketplacebackend.repository.ProductRepository;
 import com.marketplace.emarketplacebackend.repository.RoleRepository;
 import com.marketplace.emarketplacebackend.repository.SellerRepository;
+import com.marketplace.emarketplacebackend.repository.StoreRepository;
 import com.marketplace.emarketplacebackend.repository.UserRepository;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
@@ -34,6 +36,7 @@ public class EMarketplaceBackendApplication {
             UserRepository userRepository,
             PasswordEncoder passwordEncoder,
             SellerRepository sellerRepository, // Inject SellerRepository
+            StoreRepository storeRepository, // Inject SellerRepository
             CategoryRepository categoryRepository, // Inject CategoryRepository
             ProductRepository productRepository // Inject ProductRepository
     ) {
@@ -80,6 +83,8 @@ public class EMarketplaceBackendApplication {
                 System.out.println("Admin user created.");
             }
 
+
+
             // 3. Create a Seller (if not exists)
             Optional<Seller> existingSeller = sellerRepository.findByName("Sporty Gear");
             Seller sportyGearSeller;
@@ -91,7 +96,18 @@ public class EMarketplaceBackendApplication {
                 sportyGearSeller = existingSeller.get();
             }
 
-            // 4. Create Categories (if not exists)
+            // 4. Create a Seller (if not exists)
+            Optional<Store> existingStore = storeRepository.findByName("Sporty");
+            Store sportyStore;
+            if (existingStore.isEmpty()) {
+                sportyStore = new Store("Sporty", "Warri", sportyGearSeller);
+                sportyStore = storeRepository.save(sportyStore);
+                System.out.println("Store 'Sporty' created.");
+            } else {
+                sportyStore = existingStore.get();
+            }
+
+            // 5. Create Categories (if not exists)
             Optional<Category> existingSportsCategory = categoryRepository.findByName("Sports");
             Category sportsCategory;
             if (existingSportsCategory.isEmpty()) {
@@ -113,7 +129,7 @@ public class EMarketplaceBackendApplication {
             }
 
 
-            // 5. Create Products with the correct constructor and associated Seller/Category objects
+            // 6. Create Products with the correct constructor and associated Seller/Category objects
             // Ensure product names are unique if you have a unique constraint
             if (productRepository.findByName("Running Shoes").isEmpty()) {
                 productRepository.save(new Product(
@@ -121,7 +137,7 @@ public class EMarketplaceBackendApplication {
                     "High-performance running shoes for athletes.", // description
                     180.00,                      // price (changed from 18000.00, assuming currency like USD/EUR)
                     50,                          // stock (Integer)
-                    sportyGearSeller,            // Seller object
+                    sportyStore,            // Seller object
                     sportsCategory               // Category object
                 ));
                 System.out.println("Product 'Running Shoes' created.");
@@ -133,7 +149,7 @@ public class EMarketplaceBackendApplication {
                     "A versatile smart watch with health tracking features.",
                     250.00,
                     30,
-                    sportyGearSeller, // Assuming Sporty Gear also sells electronics, or create a new seller
+                    sportyStore, // Assuming Sporty Gear also sells electronics, or create a new seller
                     electronicsCategory
                 ));
                 System.out.println("Product 'Smart Watch' created.");

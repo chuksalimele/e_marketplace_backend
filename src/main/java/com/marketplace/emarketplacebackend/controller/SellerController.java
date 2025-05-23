@@ -66,6 +66,7 @@ public class SellerController {
     }
 
     // Update an existing seller - Only for ADMINS
+    // Updates only the basic seller information e.g name
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Seller> updateSeller(@PathVariable Long id, @RequestBody Seller seller) {
@@ -74,12 +75,7 @@ public class SellerController {
         if (sellerData.isPresent()) {
             Seller _seller = sellerData.get();
             _seller.setName(seller.getName());
-            _seller.setEmail(seller.getEmail()); // Ensure email is updated if needed
-            _seller.setLocation(seller.getLocation());
-            _seller.setRating(seller.getRating());
-            _seller.setProfileImageUrl(seller.getProfileImageUrl());
-            _seller.setDescription(seller.getDescription());
-            _seller.setCategories(seller.getCategories());
+            //_seller.setEmail(seller.getEmail());//email is not updatable
             return new ResponseEntity<>(sellerService.saveSeller(_seller), HttpStatus.OK); // Use service
         } else {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);

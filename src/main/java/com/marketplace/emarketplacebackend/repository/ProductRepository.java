@@ -15,20 +15,24 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     // JpaRepository provides methods like save(), findById(), findAll(), deleteById(), etc.
 
     // You can define custom query methods by following Spring Data JPA naming conventions:
-    Optional<Product> findByName(String name); 
-    
-    // Original methods:
-    List<Product> findByCategory_Name(String categoryName); 
-    List<Product> findBySeller_Id(Long sellerId);
+    Optional<Product> findByName(String name);
 
-    // NEW: Methods for filtered products with pagination and sorting
+    Page<Product> findByStore_Id(Long storeId, Pageable pageable);
+
+    Page<Product> findByStore_Seller_Id(Long sellerId, Pageable pageable); // To get all products for a seller across all their stores
+
     Page<Product> findByCategory_Name(String categoryName, Pageable pageable);
-    Page<Product> findBySeller_Id(Long sellerId, Pageable pageable);
 
-    // You can also add methods for searching by name/description with pagination
-    Page<Product> findByNameContainingIgnoreCase(String name, Pageable pageable);
-    Page<Product> findByDescriptionContainingIgnoreCase(String description, Pageable pageable);
-    Page<Product> findByNameContainingIgnoreCaseOrDescriptionContainingIgnoreCase(String name, String description, Pageable pageable);
+    Page<Product> findByCategory_NameAndStore_Location(String categoryName, String location, Pageable pageable);
+    
+    Page<Product> findByNameContainingIgnoreCase(String searcTerm, Pageable pageable);
+    // For location-based search, you might add:
+    Page<Product> findByStore_LocationIgnoreCase(String location, Pageable pageable);
+    
+    Page<Product> findByStore_IdAndStore_LocationIgnoreCase(Long storeId, String location, Pageable pageable);
 
+    Page<Product> findByNameContainingIgnoreCaseAndStore_LocationIgnoreCase(String product_name, String location, Pageable pageable);
+
+    // Or more advanced queries for geo-spatial searching once you implement that.    
 
 }
